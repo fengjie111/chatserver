@@ -1,5 +1,5 @@
 #include "friendmodel.hpp"
-#include "db.h"
+#include "connectionpool.hpp"
 #include <functional>
 
 //添加好友关系
@@ -7,9 +7,9 @@ void FriendModel::insert(int userid,int friendid){
     char sql[1024]={0};
     sprintf(sql,"insert into friend values(%d,%d)",userid,friendid);
     
-    MySQL mysql;
-    if(mysql.connect()){
-        mysql.update(sql);
+    shared_ptr<MySQL> sp=ConnectionPool::instance()->getConnection();
+    if(sp){
+        sp->update(sql);
     }
 }
 
@@ -18,10 +18,10 @@ vector<User> FriendModel::query(int userid){
     char sql[1024]={0};
     sprintf(sql,"select id,name,state from user inner join friend on user.id=friend.friendid where friend.userid=%d",userid);
 
-    MySQL mysql;
+    shared_ptr<MySQL> sp=ConnectionPool::instance()->getConnection();
     vector<User> vec;
-    if(mysql.connect()){
-        MYSQL_RES *res=mysql.query(sql);
+    if(sp){
+        MYSQL_RES *res=sp->query(sql);
         if(res!=nullptr){
             MYSQL_ROW row;
             while((row=mysql_fetch_row(res))!=nullptr){

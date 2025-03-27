@@ -1,15 +1,15 @@
 #include "groupmodel.hpp"
-#include "db.h"
+#include "connectionpool.hpp"
 
 //创建群组
 bool GroupModel::createGroup(Group &group){
     char sql[1024]={0};
     sprintf(sql,"insert into allgroup(groupname,groupdesc) values('%s','%s')",group.getName().c_str(),group.getDesc().c_str());
 
-    MySQL mysql;
-    if(mysql.connect()){
-        if(mysql.update(sql)){
-            group.setId(mysql_insert_id(mysql.getConnection()));
+    shared_ptr<MySQL> sp=ConnectionPool::instance()->getConnection();
+    if(sp){
+        if(sp->update(sql)){
+            group.setId(mysql_insert_id(sp->getConnection()));
             return true;
         }
     }
@@ -22,9 +22,9 @@ void GroupModel::addGroup(int userid,int groupid,string role){
     char sql[1024]={0};
     sprintf(sql,"insert into groupuser(groupid,userid,grouprole) values(%d,%d,'%s')",groupid,userid,role.c_str());
 
-    MySQL mysql;
-    if(mysql.connect()){
-        mysql.update(sql);
+    shared_ptr<MySQL> sp=ConnectionPool::instance()->getConnection();
+    if(sp){
+        sp->update(sql);
     }
 }
 
@@ -34,9 +34,9 @@ vector<Group> GroupModel::queryGroups(int userid){
     sprintf(sql,"select id,groupname,groupdesc from allgroup inner join groupuser on allgroup.id=groupuser.groupid where groupuser.userid=%d",userid);
 
     vector<Group> groupvec;
-    MySQL mysql;
-    if(mysql.connect()){
-        MYSQL_RES* res=mysql.query(sql);
+    shared_ptr<MySQL> sp=ConnectionPool::instance()->getConnection();
+    if(sp){
+        MYSQL_RES* res=sp->query(sql);
         if(res!=nullptr){
             MYSQL_ROW row;
             while((row=mysql_fetch_row(res))!=nullptr){
@@ -49,7 +49,7 @@ vector<Group> GroupModel::queryGroups(int userid){
     for(auto& group:groupvec){
         sprintf(sql,"select user.id,user.name,user.state,groupuser.grouprole from user inner join groupuser on user.id=groupuser.userid where groupid=%d",group.getId());
 
-        MYSQL_RES* res=mysql.query(sql);
+        MYSQL_RES* res=sp->query(sql);
         if(res!=nullptr){
             MYSQL_ROW row;
             while((row=mysql_fetch_row(res))!=nullptr){
@@ -70,9 +70,9 @@ vector<int> GroupModel::queryGroupUsers(int userid,int groupid){
     sprintf(sql,"select userid from groupuser where groupid=%d and userid!=%d",groupid,userid);
 
     vector<int> useridvec;
-    MySQL mysql;
-    if(mysql.connect()){
-        MYSQL_RES* res=mysql.query(sql);
+    shared_ptr<MySQL> sp=ConnectionPool::instance()->getConnection();
+    if(sp){
+        MYSQL_RES* res=sp->query(sql);
         if(res!=nullptr){
             MYSQL_ROW row;
             while((row=mysql_fetch_row(res))!=nullptr){
