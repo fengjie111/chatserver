@@ -121,6 +121,7 @@ void ChatService::reg(const TcpConnectionPtr& conn,json& js,Timestamp time){
     bool state=_userModel.insert(user);
     if(state){
         json response;
+        response["name"]=name;
         response["msgid"]=REG_MSG_ACK;
         response["erron"]=0;
         response["id"]=user.getId();
@@ -128,6 +129,7 @@ void ChatService::reg(const TcpConnectionPtr& conn,json& js,Timestamp time){
     }
     else{
         json response;
+        response["name"]=name;
         response["msgid"]=REG_MSG_ACK;
         response["erron"]=1;
         conn->send(response.dump());
